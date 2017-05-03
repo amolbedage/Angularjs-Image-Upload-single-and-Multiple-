@@ -1,0 +1,85 @@
+<style>
+  .thumb {
+    width: 24px;
+    height: 24px;
+    float: none;
+    position: relative;
+    top: 7px;
+}
+
+form .progress {
+    line-height: 15px;
+}
+}
+
+.progress {
+    display: inline-block;
+    width: 100px;
+    border: 3px groove #CCC;
+}
+
+.progress div {
+    font-size: smaller;
+    background: orange;
+    width: 0;
+}
+</style>
+<script src="angular.js"></script>
+<script src="ng-file-upload-shim.js"></script>
+<script src="ng-file-upload.js"></script>
+<body ng-app="fileUpload" ng-controller="MyCtrl">
+  <h4>Upload on file select</h4>
+  <button ngf-select="uploadFiles($files, $invalidFiles)" multiple
+          accept="image/*" ngf-max-height="1000" ngf-max-size="1MB">
+      Select Files</button>
+  <br><br>
+  Files:
+  <ul>
+    <li ng-repeat="f in files" style="font:smaller">{{f.name}} {{f.$errorParam}}
+      <span class="progress" ng-show="f.progress >= 0">
+        <div style="width:{{f.progress}}%"  
+            ng-bind="f.progress + '%'"></div>
+      </span>
+    </li>
+    <li ng-repeat="f in errFiles" style="font:smaller">{{f.name}} {{f.$error}} {{f.$errorParam}}
+    </li> 
+  </ul>
+  {{errorMsg}}
+	
+	<script>
+		//inject angular file upload directives and services.
+var app = angular.module('fileUpload', ['ngFileUpload']);
+
+app.controller('MyCtrl', ['$scope', 'Upload', '$timeout', function ($scope, Upload, $timeout) {
+    $scope.uploadFiles = function(files, errFiles) {
+ var img_array=[];
+      $scope.files = files;
+        $scope.errFiles = errFiles;
+        angular.forEach(files, function(file) {
+            file.upload = Upload.upload({
+                url: 'upload.php',
+                data: {file: file}
+            });
+
+            file.upload.then(function (response) {
+             
+               img_array.push(response.data);
+              
+                 console.log(img_array);
+                 console.log(response.data);
+                $timeout(function () {
+                    file.result = response.data;
+               
+                });
+            }, function (response) {
+                if (response.status > 0)
+                    $scope.errorMsg = response.status + ': ' + response.data;
+            }, function (evt) {
+                file.progress = Math.min(100, parseInt(100.0 * 
+                                         evt.loaded / evt.total));
+            });
+        });
+    }
+}]);
+	</script>
+</body>
